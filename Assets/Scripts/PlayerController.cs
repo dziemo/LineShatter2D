@@ -5,7 +5,7 @@ public class PlayerController : MonoBehaviour
     public GameObject hitParticles;
 
     public IntVariable score, multiplier;
-    public FloatVariable multiplierTimer, maxMultiplierTimer;
+    public FloatVariable multiplierTimer, maxMultiplierTimer, speed;
     public BoolVariable dead;
     public GameEvent playerDeath;
     public GameEvent playerRespawn;
@@ -19,10 +19,16 @@ public class PlayerController : MonoBehaviour
     Rigidbody2D rb;
     Camera cam;
 
+    AudioSource audio;
+
     bool leftSide = true;
     float camSize;
+    float startPitch;
+
     void Start()
     {
+        audio = GetComponent<AudioSource>();
+        startPitch = audio.pitch;
         cam = Camera.main;
         camSize = cam.orthographicSize;
         rb = GetComponent<Rigidbody2D>();
@@ -79,7 +85,7 @@ public class PlayerController : MonoBehaviour
                 rb.SetRotation(0);
             }
 
-            if (Input.GetKeyDown(KeyCode.R))
+            if (Input.GetMouseButtonDown(0))
             {
                 ResetPlayer();
             }
@@ -90,6 +96,9 @@ public class PlayerController : MonoBehaviour
 
     void ChangeSide ()
     {
+        audio.Play();
+        audio.pitch = startPitch + (multiplier.RuntimeValue * 0.005f);
+
         leftSide = !leftSide;
         var tempPos = initPos;
         tempPos.x = leftSide ? Mathf.Abs(tempPos.x) * -1 : Mathf.Abs(tempPos.x);
@@ -120,33 +129,9 @@ public class PlayerController : MonoBehaviour
 
         if (hitCheck)
         {
-            if (lastColl)
+            if (lastColl == hitCheck.collider)
             {
-                if (lastColl == hitCheck.collider)
-                {
-                    return;
-                } else
-                {
-                    if (hitCheck.collider.CompareTag("GoodSegment"))
-                    {
-                        Instantiate(hitParticles, hitCheck.point, transform.rotation);
-                        if (multiplierTimer.RuntimeValue == 0)
-                        {
-                            multiplierTimer.RuntimeValue = maxMultiplierTimer.RuntimeValue;
-                        }
-
-                        score.RuntimeValue += multiplier.RuntimeValue;
-
-                        multiplierTimer.RuntimeValue = maxMultiplierTimer.RuntimeValue;
-                        multiplier.RuntimeValue += 1;
-                        lastColl = hitCheck.collider;
-                    }
-                    else if (hitCheck.collider.CompareTag("BadSegment"))
-                    {
-                        Debug.Log("#1 Collided with " + hitCheck.collider.name + transform.position.ToString() + "  /  " + lastPos.ToString());
-                        Die();
-                    }
-                }
+                return;
             } else
             {
                 if (hitCheck.collider.CompareTag("GoodSegment"))
@@ -159,13 +144,14 @@ public class PlayerController : MonoBehaviour
 
                     score.RuntimeValue += multiplier.RuntimeValue;
 
+                    speed.RuntimeValue = speed.InitialValue + (score.RuntimeValue * 0.001f);
+
                     multiplierTimer.RuntimeValue = maxMultiplierTimer.RuntimeValue;
                     multiplier.RuntimeValue += 1;
                     lastColl = hitCheck.collider;
                 }
                 else if (hitCheck.collider.CompareTag("BadSegment"))
                 {
-                    Debug.Log("#2 Collided with " + hitCheck.collider.name + transform.position.ToString() + "  /  " + lastPos.ToString());
                     Die();
                 }
             }

@@ -7,6 +7,7 @@ public class LineController : MonoBehaviour
     public Transform lineParent, lastSegment;
     public GameObject goodSegment, badSegment;
     public FloatVariable speed;
+    public IntVariable score;
 
     bool goodSeg = true;
 
@@ -22,7 +23,7 @@ public class LineController : MonoBehaviour
         for (int i = segments.Count - 1; i >= 0; i--)
         {
             segments[i].position -= new Vector3(0, speed.RuntimeValue * Time.deltaTime);
-            if (segments[i].position.y < -15f)
+            if (segments[i].position.y < -12f)
             {
                 SpawnNewSegment();
                 var segToDestroy = segments[i];
@@ -44,7 +45,7 @@ public class LineController : MonoBehaviour
             }
         }
 
-        float startSize = 30;
+        float startSize = 35;
         float currSize = startSize;
 
         while (currSize > 0)
@@ -64,7 +65,7 @@ public class LineController : MonoBehaviour
     {
         var newSegment = Instantiate(goodSeg ? goodSegment : badSegment, lastSegment.position + new Vector3 (0, lastSegment.localScale.y), Quaternion.identity, lineParent);
         var tempScale = newSegment.transform.localScale;
-        tempScale.y = goodSeg ? Random.Range(1f, 3f) : Random.Range(0.5f, 2f);
+        tempScale.y = goodSeg ? Random.Range(Mathf.Clamp(1f - (score.RuntimeValue * 0.001f), 0.5f, 1f), Mathf.Clamp(3f - (score.RuntimeValue * 0.0005f), 1.5f, 3f)) : Random.Range(Mathf.Clamp(0.5f + (score.RuntimeValue * 0.001f), 0.5f, 1f), Mathf.Clamp(1.5f + (score.RuntimeValue * 0.001f), 1.5f, 3f));
         newSegment.transform.localScale = tempScale;
         goodSeg = !goodSeg;
         lastSegment = newSegment.transform;
