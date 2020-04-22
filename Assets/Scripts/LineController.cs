@@ -34,6 +34,16 @@ public class LineController : MonoBehaviour
 
     void SpawnStartingLine()
     {
+        if (segments.Count > 0)
+        {
+            for (int i = segments.Count - 1; i >= 0; i--)
+            {
+                var seg = segments[i];
+                segments.Remove(seg);
+                Destroy(seg.gameObject);
+            }
+        }
+
         float startSize = 30;
         float currSize = startSize;
 
@@ -59,5 +69,16 @@ public class LineController : MonoBehaviour
         goodSeg = !goodSeg;
         lastSegment = newSegment.transform;
         segments.Add(newSegment.transform);
+    }
+
+    public void Stop ()
+    {
+        speed.RuntimeValue = 0f;
+    }
+
+    public void Restart()
+    {
+        SpawnStartingLine();
+        speed.RuntimeValue = speed.InitialValue;
     }
 }

@@ -9,8 +9,6 @@ public class StaticTrailRenderer : MonoBehaviour
 
     public float minimumVertexDistance = 0.1f; //minimum distance moved before a new point is solidified.
 
-    Vector3 velocity; //direction the points are moving
-
     LineRenderer line;
     //position data
     List<Vector3> points;
@@ -20,7 +18,6 @@ public class StaticTrailRenderer : MonoBehaviour
     // Use this for initialization
     void Awake()
     {
-        velocity = new Vector3(0, speed.RuntimeValue);
         line = GetComponent<LineRenderer>();
         line.useWorldSpace = true;
         points = new List<Vector3>() { transform.position }; //indices 1 - end are solidified points, index 0 is always transform.position
@@ -50,7 +47,7 @@ public class StaticTrailRenderer : MonoBehaviour
         }
 
         //move positions
-        Vector3 diff = -velocity * Time.deltaTime;
+        Vector3 diff = -new Vector3(0, speed.RuntimeValue) * Time.deltaTime;
         for (int i = 1; i < points.Count; i++)
         {
             points[i] += diff;
@@ -69,5 +66,15 @@ public class StaticTrailRenderer : MonoBehaviour
         //save result
         line.positionCount = points.Count;
         line.SetPositions(points.ToArray());
+    }
+
+    public void ResetLineRenderer ()
+    {
+        for (int i = points.Count - 1; i > 0; i--)
+        {
+            var p = points[i];
+            points.Remove(p);
+        }
+        spawnTimes.Clear();
     }
 }
