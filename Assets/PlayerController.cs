@@ -7,7 +7,9 @@ public class PlayerController : MonoBehaviour
     public IntVariable score, multiplier;
     public FloatVariable multiplierTimer, maxMultiplierTimer;
     public BoolVariable dead;
-    
+    public GameEvent playerDeath;
+    public GameEvent playerRespawn;
+
     Vector3 initPos;
     Vector3 desiredPos;
     Vector3 lastPos;
@@ -18,10 +20,11 @@ public class PlayerController : MonoBehaviour
     Camera cam;
 
     bool leftSide = true;
-
+    float camSize;
     void Start()
     {
         cam = Camera.main;
+        camSize = cam.orthographicSize;
         rb = GetComponent<Rigidbody2D>();
 
         startPos = transform.position;
@@ -35,6 +38,7 @@ public class PlayerController : MonoBehaviour
         if (!dead.RuntimeValue)
         {
             CollisionCheck();
+            lastPos = transform.position;
 
             if ((leftSide && transform.position.x < 0) || (!leftSide && transform.position.x > 0))
             {
@@ -80,6 +84,8 @@ public class PlayerController : MonoBehaviour
                 ResetPlayer();
             }
         }
+
+        cam.orthographicSize = Mathf.Lerp(cam.orthographicSize, camSize, 0.05f);
     }
 
     void ChangeSide ()
@@ -89,10 +95,13 @@ public class PlayerController : MonoBehaviour
         tempPos.x = leftSide ? Mathf.Abs(tempPos.x) * -1 : Mathf.Abs(tempPos.x);
         desiredPos = tempPos;
         lastColl = null;
+        cam.orthographicSize += 0.3f;
     }
 
     void ResetPlayer ()
     {
+        playerRespawn.Raise();
+
         rb.SetRotation(0);
         rb.velocity = Vector3.zero;
         transform.position = startPos;
@@ -132,6 +141,11 @@ public class PlayerController : MonoBehaviour
                         multiplier.RuntimeValue += 1;
                         lastColl = hitCheck.collider;
                     }
+                    else if (hitCheck.collider.CompareTag("BadSegment"))
+                    {
+                        Debug.Log("#1 Collided with " + hitCheck.collider.name + transform.position.ToString() + "  /  " + lastPos.ToString());
+                        Die();
+                    }
                 }
             } else
             {
@@ -151,16 +165,17 @@ public class PlayerController : MonoBehaviour
                 }
                 else if (hitCheck.collider.CompareTag("BadSegment"))
                 {
+                    Debug.Log("#2 Collided with " + hitCheck.collider.name + transform.position.ToString() + "  /  " + lastPos.ToString());
                     Die();
                 }
             }
         }
-
-        lastPos = transform.position;
     }
 
     void Die ()
     {
+        playerDeath.Raise();
+
         dead.RuntimeValue = true;
         rb.isKinematic = false;
         rb.AddForce(-transform.up * 10f, ForceMode2D.Impulse);
